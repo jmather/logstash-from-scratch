@@ -1,0 +1,24 @@
+#!/bin/bash
+
+unset CDPATH
+
+if [[ `dirname "$0"` == "/docker" ]]
+then
+    TARGET=`basename "$0"`
+    if [ ! -f "/usr/share/logstash/bin/$TARGET" ] || [ $0 -nt "/usr/share/logstash/bin/$TARGET" ]
+    then
+        cp -a $0 "/usr/share/logstash/bin/$TARGET"
+    fi
+
+    "/usr/share/logstash/bin/$TARGET" $*
+    exit $?
+fi
+
+. "$(cd `dirname $0`/..; pwd)/bin/logstash.lib.sh"
+setup
+
+# bin/logstash-plugin is a short lived ruby script thus we can use aggressive "faster starting JRuby options"
+# see https://github.com/jruby/jruby/wiki/Improving-startup-time
+export JRUBY_OPTS="$JRUBY_OPTS -J-XX:+TieredCompilation -J-XX:TieredStopAtLevel=1 -J-noverify -X-C -Xcompile.invokedynamic=false"
+
+ruby_exec "${LOGSTASH_HOME}/bundle/jruby/2.5.0/bin/bundle" "$@"

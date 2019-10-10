@@ -1,0 +1,14 @@
+version: '3.3'
+services:
+  logstash:
+    image: logstash-from-scratch:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "9600:9600"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9600/_node/stats/process"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
